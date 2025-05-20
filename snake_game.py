@@ -40,3 +40,45 @@ class GameMode(Enum):
     CLASSIC = 0     # Классический режим с переходом через края
     WALLS = 1       # Режим проигрыш при столкновении со стеной
     OBSTACLES = 2   # Режим с препятствиями
+
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Змейка - Python Game")
+font_large = pygame.font.SysFont('Arial', 72)
+font_medium = pygame.font.SysFont('Arial', 36)
+font_small = pygame.font.SysFont('Arial', 24)
+clock = pygame.time.Clock()
+
+class Particle:
+    def __init__(self, x, y, color, size=5, lifetime=60):
+        self.x = x
+        self.y = y
+        self.color = color
+        self.size = size
+        self.lifetime = lifetime
+        self.age = 0
+
+    def update(self):
+        self.x += self.dx
+        self.y += self.dy
+        self.age += 1
+        return self.age < self.lifetime
+
+    def draw(self, surface):
+        alpha = max(0, 255 * (1 - self.age / self.lifetime))
+        s = pygame.Surface((self.size*2, self.size*2), pygame.SRCALPHA)
+        pygame.draw.circle(s, (*self.color, int(alpha)), (self.size, self.size), self.size)
+        surface.blit(s, (self.x - self.size, self.y - self.size))
+
+class Obstacle:
+    def __init__(self, position):
+        self.position = position
+        self.color = GRAY
+        self.pulse_counter = 0
+
+        rect = pygame.Rect(
+            self.position[0] * GRID_SIZE, 
+            self.position[1] * GRID_SIZE, 
+            GRID_SIZE, 
+            GRID_SIZE
+        )
+        

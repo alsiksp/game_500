@@ -56,7 +56,12 @@ class Particle:
         self.size = size
         self.lifetime = lifetime
         self.age = 0
-
+        # случайное направление
+        angle = random.uniform(0, 2 * math.pi)
+        speed = random.uniform(1, 4)
+        self.dx = math.cos(angle) * speed
+        self.dy = math.sin(angle) * speed
+    
     def update(self):
         self.x += self.dx
         self.y += self.dy
@@ -75,10 +80,63 @@ class Obstacle:
         self.color = GRAY
         self.pulse_counter = 0
 
+    def update(self):
+        # Медленная пульсация препятствия
+        self.pulse_counter = (self.pulse_counter + 0.05) % (2 * math.pi)
+        
+    def draw(self, surface):
+        # Пульсирующий эффект для препятствия
+        pulse = math.sin(self.pulse_counter) * 0.2 + 0.8
+        color = tuple(min(255, int(c * pulse)) for c in self.color)
+
         rect = pygame.Rect(
             self.position[0] * GRID_SIZE, 
             self.position[1] * GRID_SIZE, 
             GRID_SIZE, 
             GRID_SIZE
         )
-        
+        pygame.draw.rect(surface, color, rect)
+        pygame.draw.rect(surface, BLACK, rect, 1)
+
+        line_color = (40, 40, 40)
+        x, y = self.position[0] * GRID_SIZE, self.position[1] * GRID_SIZE
+        pygame.draw.line(surface, line_color, 
+                        (x + 3, y + 3), 
+                        (x + GRID_SIZE - 3, y + GRID_SIZE - 3), 2)
+        pygame.draw.line(surface, line_color, 
+                        (x + GRID_SIZE - 3, y + 3), 
+                        (x + 3, y + GRID_SIZE - 3), 2)
+
+class Snake:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.positions = [(GRID_WIDTH // 2, GRID_HEIGHT // 2)]
+        for i in range(1, self.length):
+            self.positions.append((self.positions[0][0], self.positions[0][1] + i))
+
+    def get_head_position(self):
+        return self.positions[0]
+
+    def update_direction(self, direction):
+        if (direction == Direction.UP and self.direction != Direction.DOWN) or \
+           (direction == Direction.DOWN and self.direction != Direction.UP) or \
+           (direction == Direction.LEFT and self.direction != Direction.RIGHT) or \
+           (direction == Direction.RIGHT and self.direction != Direction.LEFT):
+            self.next_direction = direction
+
+    def move(self):
+        if not self.is_alive:
+            return
+        self.direction = self.next_direction
+        head_x, head_y = self.get_head_position()        
+
+        if self.direction == Direction.UP:
+            head_y -= 1
+        elif self.direction == Direction.DOWN:
+            head_y += 1
+        elif self.direction == Direction.LEFT:
+            head_x -= 1
+        elif self.direction == Direction.RIGHT:
+            head_x += 1

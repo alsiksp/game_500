@@ -166,7 +166,7 @@ class Snake:
             return
 
         if game.mode == GameMode.OBSTACLES:
-            for obstacle in game.obstackes:
+            for obstacle in game.obstacles:
                 if new_head == obstacle.position:
                     self.die("Столкновение с препятствием!")
                     return
@@ -183,6 +183,28 @@ class Snake:
         if self.score % 50 == 0 and self.speed > MAX_SPEED:
             self.speed -= SPEED_INCREMENT
 
+    def die(self, reason=""):
+        if self.is_alive:
+            self.is_alive = False
+            self.death_time = pygame.time.get_ticks()
+            self.death_reason = reason
+            
+            for _ in range(80):
+                hx = self.positions[0][0] * GRID_SIZE + GRID_SIZE/2
+                hy = self.positions[0][1] * GRID_SIZE + GRID_SIZE/2
+                color = random.choice([RED, YELLOW, GREEN, BLUE, PURPLE])
+                self.particles.append(Particle(hx, hy, color))
 
+            for pos in self.positions:
+                for _ in range(5):
+                    px = pos[0] * GRID_SIZE + GRID_SIZE/2
+                    py = pos[1] * GRID_SIZE + GRID_SIZE/2
+                    color = random.choice([RED, ORANGE, YELLOW])
+                    self.particles.append(Particle(px, py, color, size=3, lifetime=45))
 
+    def update_particles(self):
+        self.particles = [p for p in self.particles if p.update()]
 
+    def draw_particles(self, surface):
+        for p in self.particles:
+            p.draw(surface)

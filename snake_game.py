@@ -112,9 +112,19 @@ class Snake:
         self.reset()
 
     def reset(self):
+        self.length = 3
         self.positions = [(GRID_WIDTH // 2, GRID_HEIGHT // 2)]
         for i in range(1, self.length):
             self.positions.append((self.positions[0][0], self.positions[0][1] + i))
+
+        self.direction = Direction.UP
+        self.next_direction = Direction.UP
+        self.score = 0
+        self.speed = SPEED
+        self.is_alive = True
+        self.death_time = 0
+        self.particles = []
+        self.death_reason = ""
 
     def get_head_position(self):
         return self.positions[0]
@@ -140,3 +150,39 @@ class Snake:
             head_x -= 1
         elif self.direction == Direction.RIGHT:
             head_x += 1
+
+        if game.mode == GameMode.CLASSIC:
+            head_x %= GRID_WIDTH
+            head_y %= GRID_HEIGHT
+        elif game.mode == GameMode.WALLS or game.mode == GameMode.OBSTACLES:
+            if head_x < 0 or head_x >= GRID_WIDTH or head_y < 0 or head_y >= GRID_HEIGHT:
+                self.die("Столкновение со стеной!")
+                return
+
+        #Новая позиция головы
+        new_head = (head_x, head_y)
+        if new_head in self.positions:
+            self.die("Столкновение с хвостом!")
+            return
+
+        if game.mode == GameMode.OBSTACLES:
+            for obstacle in game.obstackes:
+                if new_head == obstacle.position:
+                    self.die("Столкновение с препятствием!")
+                    return
+
+        self.positions.insert(0, new_head)
+        
+        if len(self.positions) > self.length:
+            self.positions.pop()
+            
+    def grow(self):
+        self.length += 1
+        self.score += 10
+
+        if self.score % 50 == 0 and self.speed > MAX_SPEED:
+            self.speed -= SPEED_INCREMENT
+
+
+
+

@@ -224,37 +224,74 @@ class Snake:
                 if i == 0:
                 else:
                     color = GREEN
+                    
+                    # Градиентная окраска тела
+                    gradient_factor = (i / self.length) * 0.7
+                    r = max(0, int(GREEN[0] * (1 - gradient_factor)))
+                    g = max(0, int(GREEN[1] * (1 - gradient_factor / 3)))
+                    b = max(0, int(GREEN[2] * (1 - gradient_factor)))
+                    color = (r, g, b)
 
             segment_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
             pygame.draw.rect(surface, color, segment_rect)
             pygame.draw.rect(surface, BLACK, segment_rect, 1)
 
-            if i == 0:
-                eye_size = GRID_SIZE // 5
-                eye_offset = GRID_SIZE // 4
-                
-                left_eye_pos = None
-                right_eye_pos = None
-                
-                if self.direction == Direction.UP:
-                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + eye_offset)
-                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + eye_offset)
-                elif self.direction == Direction.DOWN:
-                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
-                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
-                elif self.direction == Direction.LEFT:
-                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + eye_offset)
-                    right_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
-                elif self.direction == Direction.RIGHT:
-                    left_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + eye_offset)
-                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
-                
-                # Рисуем глаза (красные если мертва)
-                eye_color = RED if not self.is_alive else WHITE
-                if left_eye_pos and right_eye_pos:
-                    pygame.draw.rect(surface, eye_color, (*left_eye_pos, eye_size, eye_size))
-                    pygame.draw.rect(surface, eye_color, (*right_eye_pos, eye_size, eye_size))
+class Food:
+    def __init__(self):
+        self.position = (0, 0)
+        self.color = RED
+        self.special = False
+        self.special_timer = 0
+        self.randomize_position()
+    
+    def randomize_position(self, snake_positions=None):
+        if snake_positions is None:
+            snake_positions = []
+        
+        while True:
+            x = random.randint(0, GRID_WIDTH - 1)
+            y = random.randint(0, GRID_HEIGHT - 1)
+            if (x, y) not in snake_positions:
+                break
+        
+        self.position = (x, y)
+     
+        if random.random() < 0.15:
+            self.special = True
+            self.color = YELLOW
+            self.special_timer = pygame.time.get_ticks() + 5000  # еда исчезает через 5 секунд
+        else:
+            self.special = False
+            self.color = RED
+            self.special_timer = 0
+    
+    def draw(self, surface):
+        food_rect = pygame.Rect(
+            self.position[0] * GRID_SIZE, 
+            self.position[1] * GRID_SIZE, 
+            GRID_SIZE, 
+            GRID_SIZE
+        )
+        
+        if self.special:
+            current_time = pygame.time.get_ticks()
+            if current_time > self.special_timer:
+                self.randomize_position()
+                return
+            
+            # Мигание для специальной еды
+            if (current_time // 200) % 2 == 0:
+                pygame.draw.rect(surface, self.color, food_rect)
+            else:
+                pygame.draw.rect(surface, PURPLE, food_rect)
+        else:
+            pygame.draw.rect(surface, self.color, food_rect) 
+        pygame.draw.rect(surface, BLACK, food_rect, 1)
 
-
-                
+class GameState(Enum):
+    MENU = 0
+    GAME = 1
+    GAME_OVER = 2
+    PAUSE = 3
+    MODE_SELECT = 4  # новое состояние для выбора режима игры                
         

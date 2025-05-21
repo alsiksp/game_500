@@ -208,3 +208,53 @@ class Snake:
     def draw_particles(self, surface):
         for p in self.particles:
             p.draw(surface)
+
+    def draw(self, surface):
+        self.draw_particles(surface)
+        for i, (x, y) in enumerate(self.positions):
+            if not self.is_alive:
+                progress = min(1.0, (pygame.time.get_ticks() - self.death_time) / 1000.0)
+                color_blend = (
+                    int(GREEN[0] * (1 - progress) + RED[0] * progress),
+                    int(GREEN[1] * (1 - progress) + RED[1] * progress),
+                    int(GREEN[2] * (1 - progress) + RED[2] * progress)
+                )
+                color = color_blend
+            else:
+                if i == 0:
+                else:
+                    color = GREEN
+
+            segment_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
+            pygame.draw.rect(surface, color, segment_rect)
+            pygame.draw.rect(surface, BLACK, segment_rect, 1)
+
+            if i == 0:
+                eye_size = GRID_SIZE // 5
+                eye_offset = GRID_SIZE // 4
+                
+                left_eye_pos = None
+                right_eye_pos = None
+                
+                if self.direction == Direction.UP:
+                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + eye_offset)
+                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + eye_offset)
+                elif self.direction == Direction.DOWN:
+                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
+                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
+                elif self.direction == Direction.LEFT:
+                    left_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + eye_offset)
+                    right_eye_pos = (x * GRID_SIZE + eye_offset, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
+                elif self.direction == Direction.RIGHT:
+                    left_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + eye_offset)
+                    right_eye_pos = (x * GRID_SIZE + GRID_SIZE - eye_offset - eye_size, y * GRID_SIZE + GRID_SIZE - eye_offset - eye_size)
+                
+                # Рисуем глаза (красные если мертва)
+                eye_color = RED if not self.is_alive else WHITE
+                if left_eye_pos and right_eye_pos:
+                    pygame.draw.rect(surface, eye_color, (*left_eye_pos, eye_size, eye_size))
+                    pygame.draw.rect(surface, eye_color, (*right_eye_pos, eye_size, eye_size))
+
+
+                
+        

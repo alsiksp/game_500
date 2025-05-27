@@ -421,3 +421,56 @@ class Game:
         # эффект вспышки
         self.flash_duration = 100  # миллисекунды
 
+    def update(self):
+        # обновление эффектов
+        if self.shake_duration > 0:
+            self.shake_duration -= clock.get_time()
+            if self.shake_duration <= 0:
+                self.shake_amount = 0
+                
+        if self.flash_duration > 0:
+            self.flash_duration -= clock.get_time()
+            if self.flash_duration <= 0:
+                self.background_color = BLACK
+            
+        # обновление препятствий
+        for obstacle in self.obstacles:
+            obstacle.update()
+            
+        if self.state == GameState.GAME:
+            self.snake.move()
+            
+            if not self.snake.is_alive:
+                self.trigger_death_effects()
+                
+                if self.game_over_time == 0:
+                    self.game_over_time = pygame.time.get_ticks() + 1500
+                
+                if pygame.time.get_ticks() >= self.game_over_time:
+                    self.state = GameState.GAME_OVER
+                    self.game_over_time = 0
+                    
+                    # обнова рекорда
+                    if self.snake.score > self.high_score:
+                        self.high_score = self.snake.score
+                        self.save_high_score()
+                return
+            
+            # проверка, съела ли змейка еду
+            if self.snake.get_head_position() == self.food.position:
+                # увеличиваем змейку
+                self.snake.grow()
+                
+                # если это была специальная еда, даем дополнительные очки
+                if self.food.special:
+                    self.snake.score += 15
+                
+                # новая еда
+                self.food.randomize_position(self.snake.positions + [o.position for o in self.obstacles])
+                
+            self.snake.update_particles()
+        elif self.state == GameState.GAME_OVER:
+            self.snake.update_particles()
+
+   def draw_menu(self):
+        screen.fill(RED)

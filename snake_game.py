@@ -293,5 +293,131 @@ class GameState(Enum):
     GAME = 1
     GAME_OVER = 2
     PAUSE = 3
-    MODE_SELECT = 4  # новое состояние для выбора режима игры                
-        
+    MODE_SELECT = 4  # новое состояние для выбора режима игры 
+
+class Game:
+    def __init__(self):
+        self.snake = Snake()
+        self.food = Food()
+        self.state = GameState.MENU
+        self.high_score = 0
+        self.mode = GameMode.CLASSIC
+        self.obstacles = []
+
+        #эффекты переходов
+        self.transition_alpha = 255
+        self.transition_speed = 5
+        self.transition_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.transition_surface.fill(BLACK)
+        self.game_over_time = 0
+        # загрузка или создание рекорда
+        self.load_high_score()
+        self.start_time = 0
+        self.shake_amount = 0
+        self.shake_duration = 0
+        self.flash_duration = 0
+        # цвет фона
+        self.background_color = BLACK
+
+    def load_high_score(self):
+        try:
+            with open("highscore.txt", "r") as file:
+                self.high_score = int(file.read())
+        except:
+            self.high_score = 0
+    
+    def save_high_score(self):
+        with open("highscore.txt", "w") as file:
+            file.write(str(self.high_score))
+    
+    def generate_obstacles(self, count=10):
+        self.obstacles = []
+        snake_positions = self.snake.positions
+        head_x, head_y = snake_positions[0]
+        safe_zone = []
+        for x in range(head_x - 2, head_x + 3):
+            for y in range(head_y - 2, head_y + 3):
+                safe_zone.append((x, y))
+
+        #случайные препятствия
+        for _ in range(count):
+            while True:
+                x = random.randint(0, GRID_WIDTH - 1)
+                y = random.randint(0, GRID_HEIGHT - 1)
+                pos = (x, y)
+
+                # проверяем, что препятствие не на змейке, не на еде, не в безопасной зоне 
+                # и не на другом препятствии
+                if (pos not in snake_positions and 
+                    pos != self.food.position and
+                    pos not in safe_zone and
+                    not any(o.position == pos for o in self.obstacles)):
+                    self.obstacles.append(Obstacle(pos))
+                    break
+
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            # обработка клавиш в зависимости от состояния игры
+            if event.type == pygame.KEYDOWN:
+                if self.state == GameState.MENU:
+                    if event.key == pygame.K_SPACE:
+                        self.state = GameState.MODE_SELECT
+                elif self.state == GameState.MODE_SELECT:
+                    if event.key == pygame.K_1:
+                        self.mode = GameMode.CLASSIC
+                        self.start_new_game()
+                    elif event.key == pygame.K_2:
+                        self.mode = GameMode.WALLS
+                        self.start_new_game()
+                    elif event.key == pygame.K_3:
+                        self.mode = GameMode.OBSTACLES
+                        self.start_new_game()
+                        self.generate_obstacles()
+                    elif event.key == pygame.K_ESCAPE:
+                        self.state = GameState.MENU
+                elif self.state == GameState.GAME:
+                    if event.key == pygame.K_UP:
+                        self.snake.update_direction(Direction.UP)
+                    elif event.key == pygame.K_DOWN:
+                        self.snake.update_direction(Direction.DOWN)
+                    elif event.key == pygame.K_LEFT:
+                        self.snake.update_direction(Direction.LEFT)
+                    elif event.key == pygame.K_RIGHT:
+                        self.snake.update_direction(Direction.RIGHT)
+                    elif event.key == pygame.K_p:
+                        self.state = GameState.PAUSE
+                elif self.state == GameState.GAME_OVER:
+                    if event.key == pygame.K_r:
+                        # перезапуск игры
+                        self.start_new_game()
+                    elif event.key == pygame.K_ESCAPE:
+                        self.state = GameState.MENU
+                elif self.state == GameState.PAUSE:
+                    if event.key == pygame.K_p:
+                        self.state = GameState.GAME
+                    elif event.key == pygame.K_ESCAPE:
+                        self.state = GameState.MENU
+
+
+    def start_new_game(self):
+        self.state = GameState.GAME
+        self.snake.reset()
+        self.food.randomize_position(self.snake.positions)
+        self.background_color = BLACK    
+
+        # емли режим с препятствиями, генерируем их
+        if self.mode == GameMode.OBSTACLES:
+            self.generate_obstacles()
+
+    def trigger_death_effects(self):
+        # эффект тряски экрана
+        self.shake_amount = 15
+        self.shake_duration = 500  # миллисекунды
+        # эффект вспышки
+        self.flash_duration = 100  # миллисекунды
+

@@ -473,4 +473,86 @@ class Game:
             self.snake.update_particles()
 
    def draw_menu(self):
-        screen.fill(RED)
+        screen.fill(BLACK)
+
+        title_text = font_large.render("ЗМЕЙКА", True, GREEN)
+        screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 150))
+        
+        # инструкции
+        instruction_text = font_medium.render("Нажмите ПРОБЕЛ чтобы начать", True, WHITE)
+        screen.blit(instruction_text, (SCREEN_WIDTH // 2 - instruction_text.get_width() // 2, 300))
+        
+        # рекорд
+        high_score_text = font_small.render(f"Рекорд: {self.high_score}", True, YELLOW)
+        screen.blit(high_score_text, (SCREEN_WIDTH // 2 - high_score_text.get_width() // 2, 400))
+        
+        # управление
+        controls_text = font_small.render("Управление: стрелки - движение, P - пауза", True, GRAY)
+        screen.blit(controls_text, (SCREEN_WIDTH // 2 - controls_text.get_width() // 2, 450))
+        
+        # анимация змейки на фоне
+        current_time = pygame.time.get_ticks() // 1000
+        menu_snake_length = 10
+        for i in range(menu_snake_length):
+            x = (current_time + i) % GRID_WIDTH
+            y = (GRID_HEIGHT // 2 + i % 3) % GRID_HEIGHT
+            
+            color = GREEN if i == 0 else DARK_GREEN
+            pygame.draw.rect(screen, color, (x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE))
+
+    def draw_mode_select(self):
+        screen.fill(BLACK)
+        
+        # заголовок
+        title_text = font_large.render("ВЫБЕРИТЕ РЕЖИМ", True, GREEN)
+        screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 100))
+        
+        # варианты режимов
+        mode1_text = font_medium.render("1. Классический", True, WHITE)
+        screen.blit(mode1_text, (SCREEN_WIDTH // 2 - mode1_text.get_width() // 2, 220))
+        
+        mode2_text = font_medium.render("2. Стены", True, WHITE)
+        screen.blit(mode2_text, (SCREEN_WIDTH // 2 - mode2_text.get_width() // 2, 280))
+        
+        mode3_text = font_medium.render("3. Препятствия", True, WHITE)
+        screen.blit(mode3_text, (SCREEN_WIDTH // 2 - mode3_text.get_width() // 2, 340))
+        
+        # описания режимов
+        desc1_text = font_small.render("Классический режим со свободными границами", True, GRAY)
+        screen.blit(desc1_text, (SCREEN_WIDTH // 2 - desc1_text.get_width() // 2, 250))
+        
+        desc2_text = font_small.render("Столкновение со стеной приводит к смерти", True, GRAY)
+        screen.blit(desc2_text, (SCREEN_WIDTH // 2 - desc2_text.get_width() // 2, 310))
+        
+        desc3_text = font_small.render("Препятствия на игровом поле", True, GRAY)
+        screen.blit(desc3_text, (SCREEN_WIDTH // 2 - desc3_text.get_width() // 2, 370))
+        
+        # инструкция для возврата
+        back_text = font_small.render("Нажмите ESC для возврата в меню", True, GRAY)
+        screen.blit(back_text, (SCREEN_WIDTH // 2 - back_text.get_width() // 2, 450))
+
+    def apply_screen_shake(self):
+        if self.shake_amount > 0:
+            dx = random.randint(-self.shake_amount, self.shake_amount)
+            dy = random.randint(-self.shake_amount, self.shake_amount)
+            return dx, dy
+        return 0, 0
+
+    def draw_game(self):
+        # эффект вспышки при смерти
+        if self.flash_duration > 0:
+            self.background_color = RED
+
+        screen.fill(self.background_color)
+        shake_offset_x, shake_offset_y = self.apply_screen_shake()
+
+        for x in range(GRID_WIDTH):
+            for y in range(GRID_HEIGHT):
+                if (x + y) % 2 == 0:
+                    rect = pygame.Rect(
+                        x * GRID_SIZE + shake_offset_x, 
+                        y * GRID_SIZE + shake_offset_y, 
+                        GRID_SIZE, 
+                        GRID_SIZE
+                    )
+                    pygame.draw.rect(screen, (20, 20, 20), rect)

@@ -556,3 +556,106 @@ class Game:
                         GRID_SIZE
                     )
                     pygame.draw.rect(screen, (20, 20, 20), rect)
+
+        if self.mode == GameMode.WALLS or self.mode == GameMode.OBSTACLES:
+            border_color = (80, 80, 80)
+            pygame.draw.rect(
+                screen, 
+                border_color, 
+                (
+                    0 + shake_offset_x, 
+                    0 + shake_offset_y, 
+                    SCREEN_WIDTH, 
+                    SCREEN_HEIGHT
+                ), 
+                3
+            )
+            
+        # препятствия
+        for obstacle in self.obstacles:
+            original_position = obstacle.position
+            
+            # времено изменяем позицию для тряски
+            offset_position = (
+                obstacle.position[0] * GRID_SIZE + shake_offset_x,
+                obstacle.position[1] * GRID_SIZE + shake_offset_y
+            )
+            
+            # сохраняем и изменяем позицию для рисования
+    def draw(self, screen, position=None):
+        if position is None:
+            position = self.position
+
+    obstacle.draw(screen, offset_position)
+            
+            # возвращаем исходную позицию
+            obstacle.position = real_position
+        
+        # создаем временную поверхность для тряски
+        temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        
+        # рисуем змейку на временную поверхность
+        self.snake.draw(temp_surface)
+        
+        # рисуем еду на временную поверхность
+        self.food.draw(temp_surface)
+        
+        # добавляем тряску и переносим на основной экран
+        screen.blit(temp_surface, (shake_offset_x, shake_offset_y))
+        
+        # счет
+        score_text = font_small.render(f"Счет: {self.snake.score}", True, WHITE)
+        screen.blit(score_text, (10, 10))
+        
+        # рекорд
+        high_score_text = font_small.render(f"Рекорд: {self.high_score}", True, YELLOW)
+        screen.blit(high_score_text, (SCREEN_WIDTH - high_score_text.get_width() - 10, 10))
+        
+        # текущий режим
+        mode_names = {
+            GameMode.CLASSIC: "Классический",
+            GameMode.WALLS: "Стены",
+            GameMode.OBSTACLES: "Препятствия"
+        }
+        mode_text = font_small.render(f"Режим: {mode_names[self.mode]}", True, CYAN)
+        screen.blit(mode_text, (SCREEN_WIDTH // 2 - mode_text.get_width() // 2, 10))
+        
+        # отображаем FPS
+        fps = int(clock.get_fps())
+        fps_text = font_small.render(f"FPS: {fps}", True, CYAN)
+        screen.blit(fps_text, (10, SCREEN_HEIGHT - 30))
+        # отображаем время игры
+        elapsed = (pygame.time.get_ticks() - self.snake.death_time if not self.snake.death_time else pygame.time.get_ticks())//1000
+        time_text = font_small.render(f"Time: {elapsed}s", True, CYAN)
+        screen.blit(time_text, (100, SCREEN_HEIGHT - 30))
+    
+    def draw_game_over(self):
+        # частицы конфетти
+        self.snake.draw_particles(screen)
+        
+        # прозрачность для эффекта появления
+        time_since_death = pygame.time.get_ticks() - self.snake.death_time
+        alpha = min(180, time_since_death)
+        
+        # затемняем игровое поле
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(alpha)
+        overlay.fill(BLACK)
+        screen.blit(overlay, (0, 0))
+        
+        # сообщение о конце игры с эффектом пульсации
+        pulse = (pygame.time.get_ticks() // 100) % 20
+        pulse_scale = 1.0 + (pulse / 100.0)
+        
+        game_over_text = font_large.render("ИГРА ОКОНЧЕНА", True, RED)
+        text_width = game_over_text.get_width() * pulse_scale
+        text_height = game_over_text.get_height() * pulse_scale
+        scaled_game_over = pygame.transform.scale(game_over_text, (int(text_width), int(text_height)))
+        
+        screen.blit(scaled_game_over, (SCREEN_WIDTH // 2 - text_width // 2, 150))
+
+        if self.snake.death_reason:
+            reason_text = font_medium.render(self.snake.death_reason, True, RED)
+            screen.blit(reason_text, reason_text.get_rect(centerx=SCREEN_WIDTH//2, top=240))
+
+

@@ -222,6 +222,7 @@ class Snake:
                 color = color_blend
             else:
                 if i == 0:
+                    color = DARK_GREEN
                 else:
                     color = GREEN
                     
@@ -319,6 +320,18 @@ class Game:
         # цвет фона
         self.background_color = BLACK
 
+    def run(self):
+        self.start_time = pygame.time.get_ticks()
+        while True:
+            self.handle_events()
+            self.update()
+            self.draw()
+ 
+            if self.state == GameState.GAME:
+                clock.tick(1000 // self.snake.speed)
+            else:
+                clock.tick(60)
+    
     def load_high_score(self):
         try:
             with open("highscore.txt", "r") as file:
@@ -472,7 +485,7 @@ class Game:
         elif self.state == GameState.GAME_OVER:
             self.snake.update_particles()
 
-   def draw_menu(self):
+    def draw_menu(self):
         screen.fill(BLACK)
 
         title_text = font_large.render("ЗМЕЙКА", True, GREEN)
@@ -585,8 +598,6 @@ class Game:
             real_position = obstacle.position
             obstacle.position = offset_position
             obstacle.draw(screen)
-
-    obstacle.draw(screen, offset_position)
             
             # возвращаем исходную позицию
             obstacle.position = real_position
@@ -725,11 +736,11 @@ def run(self):
         self.handle_events()
         self.update()
         self.draw()
-        target_fps = 60  # стандартный фпс
+ 
         if self.state == GameState.GAME:
-            target_fps = 1000 // self.snake.speed  # фпс зависит от скорости змейки
-            
-        clock.tick(target_fps)
+            clock.tick(1000 // self.snake.speed)
+        else:
+            clock.tick(60)            
 
 if __name__ == "__main__":
     game = Game()

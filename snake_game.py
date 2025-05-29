@@ -582,9 +582,9 @@ class Game:
             )
             
             # сохраняем и изменяем позицию для рисования
-    def draw(self, screen, position=None):
-        if position is None:
-            position = self.position
+            real_position = obstacle.position
+            obstacle.position = offset_position
+            obstacle.draw(screen)
 
     obstacle.draw(screen, offset_position)
             
@@ -655,7 +655,82 @@ class Game:
         screen.blit(scaled_game_over, (SCREEN_WIDTH // 2 - text_width // 2, 150))
 
         if self.snake.death_reason:
-            reason_text = font_medium.render(self.snake.death_reason, True, RED)
-            screen.blit(reason_text, reason_text.get_rect(centerx=SCREEN_WIDTH//2, top=240))
+            reason_text = font_medium.render(self.snake.death_reason, True, RED) 
+            screen.blit(reason_text, (SCREEN_WIDTH // 2 - reason_text.get_width() // 2, 240))
 
+        # счет
+        score_text = font_medium.render(f"Ваш счет: {self.snake.score}", True, WHITE)
+        screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, 300))
+        
+        # инструкция для продолжения
+        restart_text = font_small.render("Нажмите R для новой игры", True, GRAY)
+        screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, 380))
+        
+        instruction_text = font_small.render("Нажмите ESC для возврата в меню", True, GRAY)
+        screen.blit(instruction_text, (SCREEN_WIDTH // 2 - instruction_text.get_width() // 2, 410))
 
+        if self.snake.score >= self.high_score:
+            # мигающее сообщение о новом рекорде
+            if (pygame.time.get_ticks() // 500) % 2 == 0:
+                record_text = font_small.render("Новый рекорд! Вы молодец!!!", True, YELLOW)
+                screen.blit(record_text, (SCREEN_WIDTH // 2 - record_text.get_width() // 2, 350))
+
+    def draw_pause(self):
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(150)
+        overlay.fill(BLACK)
+        screen.blit(overlay, (0, 0))
+        
+        # сообщение о паузе
+        pause_text = font_large.render("ПАУЗА", True, WHITE)
+        screen.blit(pause_text, (SCREEN_WIDTH // 2 - pause_text.get_width() // 2, 200))
+        
+        # инструкции
+        resume_text = font_small.render("Нажмите 'P' чтобы продолжить", True, GRAY)
+        screen.blit(resume_text, (SCREEN_WIDTH // 2 - resume_text.get_width() // 2, 300))
+        
+        menu_text = font_small.render("Нажмите 'ESC' чтобы выйти в меню", True, GRAY)
+        screen.blit(menu_text, (SCREEN_WIDTH // 2 - menu_text.get_width() // 2, 330))
+        
+    def draw_transition(self):
+        if self.transition_alpha > 0:
+            self.transition_surface.set_alpha(self.transition_alpha)
+            screen.blit(self.transition_surface, (0, 0))
+            self.transition_alpha = max(0, self.transition_alpha - self.transition_speed)
+    
+    def draw(self):
+        if self.state == GameState.MENU:
+            self.draw_menu()
+        elif self.state == GameState.MODE_SELECT:
+            self.draw_mode_select()
+        elif self.state == GameState.GAME:
+            self.draw_game()
+        elif self.state == GameState.GAME_OVER:
+            self.draw_game()
+            self.draw_game_over()
+        elif self.state == GameState.PAUSE:
+            self.draw_game()
+            self.draw_pause()
+        
+        #  эффект перехода
+        self.draw_transition()
+        
+        # обновляем экран
+        pygame.display.flip()
+
+def run(self):
+    self.start_time = pygame.time.get_ticks()
+    
+    while True:
+        self.handle_events()
+        self.update()
+        self.draw()
+        target_fps = 60  # стандартный фпс
+        if self.state == GameState.GAME:
+            target_fps = 1000 // self.snake.speed  # фпс зависит от скорости змейки
+            
+        clock.tick(target_fps)
+
+if __name__ == "__main__":
+    game = Game()
+    game.run() 
